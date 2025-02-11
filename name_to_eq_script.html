@@ -1,0 +1,74 @@
+<!-- name_to_eq_script.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Name to Integral Creator</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <py-config>
+        packages = ["sympy"]
+    </py-config>
+</head>
+<body>
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Name to Integral Calculator</h1>
+        
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+            <input type="text" id="nameInput" placeholder="Enter a name" class="border p-2 rounded">
+            <button id="calculateBtn" class="bg-blue-500 text-white px-4 py-2 rounded ml-2">Calculate</button>
+            
+            <div id="output" class="mt-4"></div>
+
+            <script type="py">
+                from pyscript import display
+                import sympy as sp
+                from js import document
+                from pyodide.ffi import create_proxy
+
+                def name_to_integral_exact(name):
+                    # Convert the name to alphabetical coding
+                    alphabetical_code = [ord(char.lower()) - 96 for char in name if char.isalpha()]
+                    
+                    # Construct the integral expression
+                    x = sp.symbols('x')
+                    integral_expr = sum(code * sp.sin(code * x) for code in alphabetical_code)
+                    
+                    # Define the integral with adjusted limits
+                    integral = sp.integrate(integral_expr, (x, 0, sp.pi / 4))
+                    
+                    return integral, alphabetical_code, integral_expr
+
+                def calculate(event):
+                    name = document.getElementById("nameInput").value
+                    if not name:
+                        display("Please enter a name", target="output")
+                        return
+                        
+                    integral_result, alphabetical_code, integral_expr = name_to_integral_exact(name)
+                    
+                    result_html = f"""
+                    <div class='mt-4'>
+                        <p><strong>Name:</strong> {name}</p>
+                        <p><strong>Alphabetical coding:</strong> {alphabetical_code}</p>
+                        <p><strong>Integral expression:</strong> ∫(0 to π/4) [{integral_expr}] dx</p>
+                        <p><strong>Integral result:</strong> {integral_result}</p>
+                    </div>
+                    """
+
+                    result_html = f"""
+                    <div class='mt-4'>
+                        <p><strong>Integral expression:</strong> ∫(0 to π/4) [{integral_expr}] dx</p>
+                        </div>
+                    """
+                    
+                    display(result_html, target="output")
+
+                # Set up event listener using Pyodide's create_proxy
+                calculate_proxy = create_proxy(calculate)
+                document.getElementById("calculateBtn").addEventListener("click", calculate_proxy)
+            </script>
+        </div>
+    </div>
+</body>
+</html>
+
